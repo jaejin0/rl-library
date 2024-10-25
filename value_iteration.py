@@ -1,7 +1,10 @@
 from numpy.random import choice 
 from mdp import MDP
 
-class DynamicProgramming:
+# Dynamic Programming (DP) assumes complete knowledge of MDP, including the reward function and transition function. We use Bellman equation to find optimal value functions.
+# Value Iteration is a DP algorithm which uses Bellman equation to find optimal policy.
+# Policy Iteration returns policy when policy is stable, but may not be optimal.
+class ValueIteration:
     # n-tuple (S, A, R, T, gamma) 
     def __init__(self, state_space, action_space, reward_function, transition_function, discount_factor, iteration_limit):
         self.state_space = state_space # 1-D array of state space
@@ -10,8 +13,9 @@ class DynamicProgramming:
         self.transition_function = transition_function # function(state, action, next_state) -> float
         self.discount_factor = discount_factor # <= 1 (float)
         self.iteration_limit = iteration_limit # depth of bellman equaition (int)
-
+        
     def state_value_policy(self, state) -> float:
+        # optimal greedy policy
         max_action, max_value = choice(action_space), 0
         for a in action_space:
             sum_over_state_space = 0
@@ -25,6 +29,7 @@ class DynamicProgramming:
         return max_action
 
     def action_value_policy(self, state) -> float:
+        # optimal greedy policy
         max_action, max_value = choice(action_space), 0
         for a in action_space:
             action_value = self.action_value_function(state, a)
@@ -118,7 +123,7 @@ if __name__ == "__main__":
 
     discount_factor = 0.5
     iteration_limit = 4
-    policy = DynamicProgramming(state_space, action_space, reward_function, transition_function, discount_factor, iteration_limit)
+    policy = ValueIteration(state_space, action_space, reward_function, transition_function, discount_factor, iteration_limit)
 
     while True:
         current_state = mdp.current_state
