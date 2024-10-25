@@ -15,10 +15,52 @@ class SARSA():
         self.epsilon = epsilon # probability of choosing random action <= 1 (float)
     
         self.action_value_table = np.zeros([len(state_space), len(action_space)])
-    
-    def policy(self, state):
-        coin_flip = np.random.binomial(1, self.epsilon)
-        print(coin_flip)
+        self.prev_state = None
+        self.prev_action = None
+
+    def initial_policy(self, state):
+        choose_random_action = np.random.binomial(1, self.epsilon)
+        if choose_random_action:
+            action = np.random.choice(self.action_space)
+        else:
+            action, max_value = np.random.choice(self.action_space), 0 
+            state_index = self.state_space.index(state)
+            for a_index in range(len(action_space)):
+                action_value = self.action_value_table[state_index][a_index]
+                if action_value > max_value:
+                    max_value = action_value
+                    action = self.action_space[a_index]
+        
+        self.prev_state = state
+        self.prev_action = action
+
+        return action
+
+    def policy(self, state, reward):
+        choose_random_action = np.random.binomial(1, self.epsilon)
+        if choose_random_action:
+            action = np.random.choice(self.action_space)
+        else:
+            action, max_value = np.random.choice(self.action_space), 0 
+            state_index = self.state_space.index(state)
+            for a_index in range(len(action_space)):
+                action_value = self.action_value_table[state_index][a_index]
+                if action_value > max_value:
+                    max_value = action_value
+                    action = self.action_space[a_index]
+        
+        print(self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)])
+        self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)] += \
+            self.learning_rate * (reward + (self.discount_factor * 
+                                            self.action_value_table[self.state_space.index(state)][self.action_space.index(action)]
+                                           ) - 
+                                  self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)]
+                                 )
+
+        self.prev_state = state
+        self.prev_action = action
+
+        return action
 
 
 
@@ -32,6 +74,7 @@ if __name__ == "__main__":
     for i in range(grid_height):
         for j in range(grid_width):
             state_space.append((i, j))
+    terminal_state_space = [(grid_height - 1, grid_width - 1)]
 
     initial_state_distribution = []
     for i in range(grid_height):
@@ -72,23 +115,32 @@ if __name__ == "__main__":
                     return 1
                 if state[0] != grid_height - 1 and state[0] + 1 == next_state[0] and state[1] == next_state[1]:
                     return 1
+            case 'no-op':
+                if state == next_state:
+                    return 1
+
         return 0
     
-    mdp = MDP(state_space, action_space, reward_function, transition_function, initial_state_distribution)
+    mdp = MDP(state_space, terminal_state_space, action_space, reward_function, transition_function, initial_state_distribution)
 
     discount_factor = 0.5
-    learning_rate = 0.01
+    learning_rate = 0.1
     epsilon = 0.5
     agent = SARSA(state_space, action_space, discount_factor, learning_rate, epsilon)
 
+    # initial_action
+    action = agent.initial_policy(mdp.current_state)
+    mdp.forward(action)
+    
     while True:
+        print(f"{agent.action_value_table}")
         current_state = mdp.current_state
         current_reward = mdp.current_reward
         print(f"Current state is  : {current_state}")
         print(f"Current reward is : {current_reward}")
 
-        action = agent.policy(current_state)
+        action = agent.policy(current_state, current_reward)
         print(f"Action chosen by state_value_policy agent is : {action}")
-        
-        foo = input(f"press any key to forward")
+
+        # foo = input(f"press any key to forward")
         mdp.forward(action)

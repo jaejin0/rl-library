@@ -76,6 +76,7 @@ if __name__ == "__main__":
     for i in range(grid_height):
         for j in range(grid_width):
             state_space.append((i, j))
+    terminal_state_space = [(grid_height - 1, grid_width - 1)]
 
     initial_state_distribution = []
     for i in range(grid_height):
@@ -116,9 +117,14 @@ if __name__ == "__main__":
                     return 1
                 if state[0] != grid_height - 1 and state[0] + 1 == next_state[0] and state[1] == next_state[1]:
                     return 1
+            case 'no-op':
+                if state == next_state:
+                    return 1
+
         return 0
+
     print(state_space, initial_state_distribution) 
-    mdp = MDP(state_space, action_space, reward_function, transition_function, initial_state_distribution)
+    mdp = MDP(state_space, terminal_state_space, action_space, reward_function, transition_function, initial_state_distribution)
     print(mdp.current_state)
 
     discount_factor = 0.5
