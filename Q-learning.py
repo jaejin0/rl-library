@@ -4,9 +4,9 @@ from mdp import MDP
 # Temporal-Difference (TD) Learning is a family of RL algorithm that learn optimal policies and value functions based on data collected via environment interations.
 # For an example of TD Learning, V(s^t) <- V(s^t) + alpha(X - V(s^t)), where alpha is learning rate and X is the update target.
 # And for action value function, Q(s^t, a^t) <- Q(s^t, a^t) + alpha(X - Q(s^t, a^t)).
-# SARSA (state-action-reward-state-action) is a TD algorithm
-# TD learning, on-policy
-class SARSA():
+# Q-learning is a TD algorithm which uses Bellman equation to update its value function estimates
+# TD learning, off-policy
+class QLearning():
     # 5-tuple (S, A, gamma, alpha, epsilon)
     def __init__(self, state_space, action_space, discount_factor, learning_rate, exploration_parameter):
         self.state_space = state_space # 1-D array of state space
@@ -19,7 +19,7 @@ class SARSA():
         self.prev_state = None
         self.prev_action = None
 
-    def initial_policy(self, state):
+    def policy(self, state):
         choose_random_action = np.random.binomial(1, self.exploration_parameter)
         if choose_random_action:
             action = np.random.choice(self.action_space)
@@ -37,32 +37,13 @@ class SARSA():
 
         return action
 
-    def policy(self, state, reward):
-        choose_random_action = np.random.binomial(1, self.exploration_parameter)
-        if choose_random_action:
-            action = np.random.choice(self.action_space)
-        else:
-            action, max_value = np.random.choice(self.action_space), 0 
-            state_index = self.state_space.index(state)
-            for a_index in range(len(action_space)):
-                action_value = self.action_value_table[state_index][a_index]
-                if action_value > max_value:
-                    max_value = action_value
-                    action = self.action_space[a_index]
-        
-        print(self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)])
+    def learn_action_value_function(self, state, reward):
+        max_value = 0
+        for a in action_space:
+            max_value = max(max_value, self.action_value_table[self.state_space.index(state)][self.action_space.index(a)])
         self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)] += \
-            self.learning_rate * (reward + (self.discount_factor * 
-                                            self.action_value_table[self.state_space.index(state)][self.action_space.index(action)]
-                                           ) - 
-                                  self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)]
-                                 )
-
-        self.prev_state = state
-        self.prev_action = action
-
-        return action
-
+            self.learning_rate * (reward + (self.discount_factor * max_value) -  
+                                  self.action_value_table[self.state_space.index(self.prev_state)][self.action_space.index(self.prev_action)])
 
 
 if __name__ == "__main__":
@@ -127,12 +108,8 @@ if __name__ == "__main__":
     discount_factor = 0.5
     learning_rate = 0.1
     exploration_parameter = 0.5
-    agent = SARSA(state_space, action_space, discount_factor, learning_rate, exploration_parameter)
+    agent = QLearning(state_space, action_space, discount_factor, learning_rate, exploration_parameter)
 
-    # initial_action
-    action = agent.initial_policy(mdp.current_state)
-    mdp.forward(action)
-    
     while True:
         print(f"{agent.action_value_table}")
         current_state = mdp.current_state
@@ -140,8 +117,12 @@ if __name__ == "__main__":
         print(f"Current state is  : {current_state}")
         print(f"Current reward is : {current_reward}")
 
-        action = agent.policy(current_state, current_reward)
+        action = agent.policy(current_state)
         print(f"Action chosen by state_value_policy agent is : {action}")
 
         # foo = input(f"press any key to forward")
         mdp.forward(action)
+
+        next_state = mdp.current_state
+        current_reward = mdp.current_reward
+        agent.learn_action_value_function(next_state, current_reward)
