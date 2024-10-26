@@ -1,5 +1,6 @@
+import torch
 import numpy as np
-from mdp import MDP
+from vmas import make_env
 
 # Temporal-Difference (TD) Learning is a family of RL algorithm that learn optimal policies and value functions based on data collected via environment interations.
 # For an example of TD Learning, V(s^t) <- V(s^t) + alpha(X - V(s^t)), where alpha is learning rate and X is the update target.
@@ -48,81 +49,38 @@ class CentralQLearning():
 
 if __name__ == "__main__":
     
-    # MDP specification
-    grid_height = 3
-    grid_width = 4
+    env = make_env(
+            scenario="waterfall",
+            num_envs=32,
+            device="cpu",
+            continuous_actions=True,
+            wrapper=None,
+            max_steps=None,
+            seed=None,
+            dict_spaces=False,
+            grad_enabled=False,
+            terminated_truncated=False,
+            n_agents = 10 
+        )
+    env.seed(0)
+    n_agents = 10
+    obs = env.reset()
+    history = []
+    for _ in range(1000):
+        actions = []
+        for i in range(n_agents):
+            obs_agent = obs[i]
+            action_agent = torch.clamp(
+                obs_agent[:, -2:],
+                min=-env.agents[i].u_range,
+                max=env.agents[i].u_range,
+            
+            )
+            actions.append(action_agent)
 
-    state_space = []
-    for i in range(grid_height):
-        for j in range(grid_width):
-            state_space.append((i, j))
-    terminal_state_space = [(grid_height - 1, grid_width - 1)]
+        obs, new_rews, _, _ = env.step(actions)
 
-    initial_state_distribution = []
-    for i in range(grid_height):
-        for j in range(grid_width):
-            initial_state_distribution.append(0)
-
-    initial_state_distribution[0] = 0.6
-    initial_state_distribution[1] = 0.2
-    initial_state_distribution[grid_width] = 0.2
-
-    action_space = ['left', 'right', 'up', 'down', 'no-op'] 
-
-    def reward_function(state, action, next_state):
-        if next_state == (grid_height - 1, grid_width - 1): # goal
-            return 1
-        else:
-            return 0
-
-    def transition_function(state, action, next_state):
-        match action:
-            case 'left':
-                if state[1] == 0 and state == next_state: # can't move to the left further
-                    return 1
-                if state[1] != 0 and state[1] - 1 == next_state[1] and state[0] == next_state[0]:
-                    return 1
-            case 'right':
-                if state[1] == grid_width - 1 and state == next_state: # can't move to the right further
-                    return 1
-                if state[1] != grid_width - 1 and state[1] + 1 == next_state[1] and state[0] == next_state[0]:
-                    return 1
-            case 'up':
-                if state[0] == 0 and state == next_state: # can't move up further
-                   return 1
-                if state[0] != 0 and state[0] - 1 == next_state[0] and state[1] == next_state[1]:
-                   return 1
-            case 'down':
-                if state[0] == grid_height - 1 and state == next_state: # can't move down further
-                    return 1
-                if state[0] != grid_height - 1 and state[0] + 1 == next_state[0] and state[1] == next_state[1]:
-                    return 1
-            case 'no-op':
-                if state == next_state:
-                    return 1
-
-        return 0
-    
-    mdp = MDP(state_space, terminal_state_space, action_space, reward_function, transition_function, initial_state_distribution)
-
-    discount_factor = 0.5
-    learning_rate = 0.1
-    exploration_parameter = 0.5
-    agent = QLearning(state_space, action_space, discount_factor, learning_rate, exploration_parameter)
-
-    while True:
-        print(f"{agent.action_value_table}")
-        current_state = mdp.current_state
-        current_reward = mdp.current_reward
-        print(f"Current state is  : {current_state}")
-        print(f"Current reward is : {current_reward}")
-
-        action = agent.policy(current_state)
-        print(f"Action chosen by state_value_policy agent is : {action}")
-
-        # foo = input(f"press any key to forward")
-        mdp.forward(action)
-
-        next_state = mdp.current_state
-        current_reward = mdp.current_reward
-        agent.learn_action_value_function(next_state, current_reward)
+        frame = env.render(mode='rgb_array',
+                           env_index=0,
+                           agent_index_focus=None)
+        history.append(frame)
