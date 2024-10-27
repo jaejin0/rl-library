@@ -1,17 +1,21 @@
 import torch
-import numpy as np
 from vmas import make_env
+from vmas.simulator.heuristic_policy import BaseHeuristicPolicy, RandomPolicy
+
 
 # Temporal-Difference (TD) Learning is a family of RL algorithm that learn optimal policies and value functions based on data collected via environment interations.
 # For an example of TD Learning, V(s^t) <- V(s^t) + alpha(X - V(s^t)), where alpha is learning rate and X is the update target.
 # And for action value function, Q(s^t, a^t) <- Q(s^t, a^t) + alpha(X - Q(s^t, a^t)).
 # Central Q-learning is a TD algorithm for multi-agents which uses Bellman equation to update its value function estimates
 # TD learning, off-policy
+
+# This modification uses POMDP, which uses observation, as this utilize VMAS, a MARL simulation.
+# POMDP : 7-tuple (S, A, T, R, omega, O, gamma)
 class CentralQLearning():
-    # 5-tuple (S, A, gamma, alpha, epsilon)
-    def __init__(self, state_space, action_space, discount_factor, learning_rate, exploration_parameter):
-        self.state_space = state_space # 1-D array of state space
-        self.action_space = action_space # 1-D array of action space
+    # 5-tuple (O, A, gamma, alpha, epsilon)
+    def __init__(self, observation_space, action_space, discount_factor, learning_rate, exploration_parameter):
+        self.observation_space = observation_space # (list of tensor)
+        self.action_space = action_space # (list of tensor)
         self.discount_factor = discount_factor # <= 1 (float)
         self.learning_rate = learning_rate # (float)
         self.exploration_parameter = exploration_parameter # probability of choosing random action <= 1 (float)
@@ -21,6 +25,7 @@ class CentralQLearning():
         self.prev_action = None
 
     def policy(self, state):
+        # discretize state
         choose_random_action = np.random.binomial(1, self.exploration_parameter)
         if choose_random_action:
             action = np.random.choice(self.action_space)
@@ -50,37 +55,33 @@ class CentralQLearning():
 if __name__ == "__main__":
     
     env = make_env(
-            scenario="waterfall",
+            scenario="wheel", # can be scenario name or BaseScenario class
             num_envs=32,
-            device="cpu",
+            device="cpu", # Or "cuda" for GPU
             continuous_actions=True,
-            wrapper=None,
-            max_steps=None,
-            seed=None,
+            wrapper=None,  # One of: None, "rllib", "gym", "gymnasium", "gymnasium_vec"
+            max_steps=1000, # Defines the horizon. None is infinite horizon.
+            seed=None, # Seed of the environment
             dict_spaces=False,
             grad_enabled=False,
             terminated_truncated=False,
-            n_agents = 10 
-        )
-    env.seed(0)
-    n_agents = 10
+            n_agents = 2,
+    )
+    policy = RandomPolicy(continuous_action=True)
+
     obs = env.reset()
-    history = []
+
     for _ in range(1000):
-        actions = []
-        for i in range(n_agents):
-            obs_agent = obs[i]
-            action_agent = torch.clamp(
-                obs_agent[:, -2:],
-                min=-env.agents[i].u_range,
-                max=env.agents[i].u_range,
-            
-            )
-            actions.append(action_agent)
-
-        obs, new_rews, _, _ = env.step(actions)
-
-        frame = env.render(mode='rgb_array',
-                           env_index=0,
-                           agent_index_focus=None)
-        history.append(frame)
+        actions = [None] * len(obs)
+        for i in range(len(obs)):
+            actions[i] = policy.compute_action(obs[i], u_range=env.agents[i].u_range)
+        print(f"This is the action\n: {env.action_space}")
+        print(f"This is the observation\n: {obs}")
+        obs, rews, dones, info = env.step(actions)
+        rewards = torch.stack(rews, dim=1)
+        global_reward = rewards.mean(dim=1)
+        mean_global_reward = global_reward.mean(dim=0)
+        env.render(
+            mode="human",
+            agent_index_focus=None,
+        )
