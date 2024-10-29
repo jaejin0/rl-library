@@ -5,7 +5,7 @@ from mdp import MDP
 # Value Iteration is a DP algorithm which uses Bellman equation to find optimal policy.
 # Policy Iteration returns policy when policy is stable, but may not be optimal.
 class ValueIteration:
-    # n-tuple (S, A, R, T, gamma) 
+    # 5 inputs (S, A, R, T, gamma) 
     def __init__(self, state_space, action_space, reward_function, transition_function, discount_factor, iteration_limit):
         self.state_space = state_space # 1-D array of state space
         self.action_space = action_space # 1-D array of action space

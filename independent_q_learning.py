@@ -7,10 +7,10 @@ from itertools import combinations
 # Temporal-Difference (TD) Learning is a family of RL algorithm that learn optimal policies and value functions based on data collected via environment interations.
 # For an example of TD Learning, V(s^t) <- V(s^t) + alpha(X - V(s^t)), where alpha is learning rate and X is the update target.
 # And for action value function, Q(s^t, a^t) <- Q(s^t, a^t) + alpha(X - Q(s^t, a^t)).
-# Central Q-learning is a TD algorithm for multi-agents which uses Bellman equation to update its value function estimates
+# Independent Q-learning is a TD algorithm for multi-agents which uses Bellman equation to update its value function estimates
 # TD learning, off-policy
 
-# This modification uses POMDP, which uses observation, as this utilize VMAS, a MARL simulation.
+# This modification uses POMDP, which uses observation, as this utilize VMAS, a MARL simulation. And, as the environment
 # POMDP : 7-tuple (S, A, T, R, omega, O, gamma)
 class CentralQLearning():
     # 6 inputs (N, O, A, gamma, alpha, epsilon)

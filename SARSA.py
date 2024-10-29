@@ -7,7 +7,7 @@ from mdp import MDP
 # SARSA (state-action-reward-state-action) is a TD algorithm
 # TD learning, on-policy
 class SARSA():
-    # 5-tuple (S, A, gamma, alpha, epsilon)
+    # 5 inputs (S, A, gamma, alpha, epsilon)
     def __init__(self, state_space, action_space, discount_factor, learning_rate, exploration_parameter):
         self.state_space = state_space # 1-D array of state space
         self.action_space = action_space # 1-D array of action space
