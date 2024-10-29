@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # env.observation_space : Tuple(Box(-inf, inf, (13,), float32), Box(-inf, inf, (13,), float32)) 
     # env.action_space : Tuple(Discrete(9), Discrete(9)) # for the case continuous_actions=False
 
-    episode = 100
+    episode = 1000
     for ep in range(episode):
         joint_observation = env.reset()
         for _ in range(env.max_steps):
