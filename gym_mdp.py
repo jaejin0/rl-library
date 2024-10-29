@@ -3,7 +3,6 @@ from q_learning import QLearning
 
 # Gymnasium gives observation space, not state space
 env = gym.make("CartPole-v1", render_mode="human")
-
 # observation_space = env.observation_space
 # action_space = env.action_space
 # discount_factor = 0.5
