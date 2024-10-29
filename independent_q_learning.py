@@ -76,7 +76,7 @@ class IndependentQLearning():
             for k in self.action_value_tables[i]:
                 if k[0] != discrete_joint_observation:
                     continue
-                max_value = max(max_value, self.joint_action_value_tables[i][k])
+                max_value = max(max_value, self.action_value_tables[i][k])
 
             self.action_value_tables[i][(self.prev_discrete_joint_observation, self.prev_discrete_joint_action[i])] = \
                     self.action_value_tables[i].get((self.prev_discrete_joint_observation, self.prev_discrete_joint_action[i]), 0) + \
@@ -111,16 +111,20 @@ if __name__ == "__main__":
 
     episode = 1000
     for ep in range(episode):
+        print(f"EPISODE: {ep}")
         joint_observation = env.reset()
         for _ in range(env.max_steps):
-            print(f"EPISODE: {ep}")
             joint_action = agent.policy(joint_observation)
-            print(f"This is the observation\n: {joint_observation}")
-            print(f"This is the action\n: {joint_action}")
+            # print(f"This is joint observation\n: {joint_observation}")
+            # print(f"This is joint action\n: {joint_action}")
             joint_observation, joint_reward, dones, info = env.step(joint_action)
-            print(f"This is reward: {joint_reward}")
+            # print(f"This is joint reward: {joint_reward}")
+
+            for i in range(env.n_agents):
+                joint_reward[i] = 1/(1 + np.exp(-joint_reward[i]))
+
             reward = torch.stack(joint_reward, dim=1).mean(dim=1).mean(dim=0)[0].item()
-            print(f"total reward: {reward}")
+            # print(f"This is reward: {reward}")
             agent.learn_joint_action_value_function(joint_observation, joint_reward)
 
             if dones[0].item() == True:
