@@ -62,7 +62,7 @@ class CentralQLearning():
 
         return discrete_joint_action
 
-    def learn_joint_action_value_function(self, joint_observation, joint_reward):
+    def learn_joint_action_value_function(self, joint_observation, reward):
         # finding tuple of discretized joint observation
         discrete_joint_observation = ()
         for obs in joint_observation:
@@ -79,7 +79,7 @@ class CentralQLearning():
 
         self.joint_action_value_table[(self.prev_discrete_joint_observation, self.prev_discrete_joint_action)] = \
                 self.joint_action_value_table.get((self.prev_discrete_joint_observation, self.prev_discrete_joint_action), 0) + \
-                self.learning_rate * (joint_reward + (self.discount_factor * max_value) - 
+                self.learning_rate * (reward + (self.discount_factor * max_value) - 
                                       self.joint_action_value_table.get((self.prev_discrete_joint_observation, self.prev_discrete_joint_action), 0))
   
 
@@ -110,17 +110,20 @@ if __name__ == "__main__":
 
     episode = 1000
     for ep in range(episode):
+        # print(agent.joint_action_value_table)
+        print(f"EPISODE: {ep}")
         joint_observation = env.reset()
         for _ in range(env.max_steps):
-            print(f"EPISODE: {ep}")
+            # print(f"EPISODE: {ep}")
             joint_action = agent.policy(joint_observation)
-            print(f"This is the observation\n: {joint_observation}")
-            print(f"This is the action\n: {joint_action}")
+            # print(f"This is joint observation\n: {joint_observation}")
+            # print(f"This is joint action\n: {joint_action}")
             joint_observation, joint_reward, dones, info = env.step(joint_action)
-            print(f"This is reward: {joint_reward}")
-            total_reward = torch.stack(joint_reward, dim=1).mean(dim=1).mean(dim=0)[0].item()
-            print(f"total reward: {total_reward}")
-            agent.learn_joint_action_value_function(joint_observation, total_reward)
+            # print(f"This is joint reward: {joint_reward}")
+            reward = torch.stack(joint_reward, dim=1).mean(dim=1).mean(dim=0)[0].item()
+            # print(f"reward: {reward}")
+            reward = 1/(1 + np.exp(-reward)) # normalized with sigmoid
+            agent.learn_joint_action_value_function(joint_observation, reward)
 
             if dones[0].item() == True:
                 joint_observation = env.reset()
