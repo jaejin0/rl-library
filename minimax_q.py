@@ -30,16 +30,20 @@ class MinimaxQ:
         self.learning_rate = learning_rate
         self.exploration_parameter = exploration_parameter
 
-        self.action_value_function
+        self.n_agents = len(state_space)
+        # defining normal form game for each state
+        self.action_value_function = [np.zeros([len(state_space), len(action_space)]) for i in range(self.n_agents)]
+        self.action_value_table = np.zeros([len(state_space), len(action_space)])
+         
 
 
 if __name__ == '__main__':
+    # env.observation_space(agent) = Box(0, 255, (210, 160, 3), uint8)
+    # env.action_space(agent) = Discrete(6)
     env = basketball_pong_v3.env(render_mode="human")
     env.reset()
-
     for agent in env.agent_iter():
         observation, reward, termination, truncation, info = env.last()
-
         if termination or truncation:
             action = None
         else:
