@@ -6,8 +6,8 @@ class MDP:
         self.state_space = state_space # 1-D array of state space [s1, s2, ... ]
         self.terminal_state_space = terminal_state_space # 1-D array of terminal state space # subset of state space
         self.action_space = action_space # 1-D array of action space [a1, a2, ... ]
-        self.reward_function = reward_function # function(state, action, next_action) -> float
-        self.transition_function = transition_function # function(state, action, next_action) -> float
+        self.reward_function = reward_function # function(state, action, next_state) -> float
+        self.transition_function = transition_function # function(state, action, next_state) -> float
         self.initial_state_distribution = initial_state_distribution # 1-D array of probability of state space [pr1, pr2, ... ] # same size as the state_space, probabilties sums up to 1. 
         
         # initial state
@@ -23,7 +23,7 @@ class MDP:
         next_state = self.state_space[next_state_index]
         self.current_reward = self.reward_function(self.current_state, action, next_state)
         
-        if next_state in self.terminal_state_space:
+        if next_state in self.terminal_state_space
             self.reset()
         else:
             self.current_state = next_state
