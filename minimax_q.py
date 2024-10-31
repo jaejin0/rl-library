@@ -1,4 +1,5 @@
 from pettingzoo.atari import basketball_pong_v3
+import numpy as np
 
 # Joint-Action Learning with Game Theory 
 
@@ -22,8 +23,15 @@ from pettingzoo.atari import basketball_pong_v3
 #         Q_j(s^t, a^t) <- Q_j(s^t, a^t) + alpha[r^t_j + gamma * Value_j(Gamma_{s^{t+1}}) - Q_j(s^t, a^t)]
 
 class MinimaxQ:
-    def __init__():
-        
+    def __init__(self, state_space, action_space, discount_factor, learning_rate, exploration_parameter):
+        self.state_space = state_space
+        self.action_space = action_space
+        self.discount_factor = discount_factor
+        self.learning_rate = learning_rate
+        self.exploration_parameter = exploration_parameter
+
+        self.action_value_function
+
 
 if __name__ == '__main__':
     env = basketball_pong_v3.env(render_mode="human")
