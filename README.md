@@ -1,8 +1,12 @@
 # Collection of Reinforcement Learning algorithms
 
+> This repository is a set of reusable implementations of various Reinforcement Learning algorithms and Marokv Decision Process environments.
+
+The RL, DRL, and MARL algorithms are based on the pseudocode of [marl-book.com](https://www.marl-book.com/).
+
 ## TODOs:
 
-- create POMDP
+- create a POMDP environment
 - finish implementing minimax-Q algorithm
 
 ## resources used
