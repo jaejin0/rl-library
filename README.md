@@ -17,4 +17,5 @@ The RL, DRL, and MARL algorithms are based on the pseudocode of [marl-book.com](
 [Level-based Foraging](https://github.com/semitable/lb-foraging)<br>
 [Stable-Baselines3](https://stable-baselines3.readthedocs.io/en/master/)<br>
 
+## multiagent environments
 
