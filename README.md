@@ -18,4 +18,19 @@ The RL, DRL, and MARL algorithms are based on the pseudocode of [marl-book.com](
 [Stable-Baselines3](https://stable-baselines3.readthedocs.io/en/master/)<br>
 
 ## multiagent environments
+|Environment|Observability|Observations|Actions|Rewards|
+|-----------|----------|--------|----|-----|
+|Environments:|||||
+|LBF|full, part|dis|dis|spa|
+|MPE|full, part|con|dis, con|den|
+|SMAC|part|mix|dis|den|
+|RWARE|part|dis|dis|spa|
+|GRF|full, part|mix|dis|den, spa|
+|Hanabi|part|dis|dis|spa|
+|Overcooked|full|mix|dis|spa|
+|---------|-------|----|---|----|
+|Environment collections|||||
+|Melting Pot|part|con|dis|den, spa|
+|OpenSpiel|full, part|dis|dis|den, spa|
+|Petting Zoo|full, part|mix|dis, con|den, spa|
 
