@@ -28,8 +28,7 @@ The RL, DRL, and MARL algorithms are based on the pseudocode of [marl-book.com](
 |GRF|full, part|mix|dis|den, spa|
 |Hanabi|part|dis|dis|spa|
 |Overcooked|full|mix|dis|spa|
-|---------|-------|----|---|----|
-|Environment collections|||||
+|Environment collections:|||||
 |Melting Pot|part|con|dis|den, spa|
 |OpenSpiel|full, part|dis|dis|den, spa|
 |Petting Zoo|full, part|mix|dis, con|den, spa|
