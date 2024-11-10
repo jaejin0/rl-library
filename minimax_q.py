@@ -57,8 +57,10 @@ if __name__ == '__main__':
     env = gym.make(f"Foraging-8x8-{num_agents}p-1f-v3")
     obs = env.reset()
 
-    # agent initialization 
-    agent = MinimaxQ(num_agents, discount_factor, learning_rate, exploration_parameter)
+    # agent initialization (independent learning)
+    agents = []
+    for i in range(num_agents):
+        agents.append(MinimaxQ(num_agents, discount_factor, learning_rate, exploration_parameter))
 
     max_steps = 1000
     for _ in range(max_steps):
