@@ -10,6 +10,11 @@ max_steps = 1000
 for _ in range(max_steps):
     time.sleep(0.5)
     actions = env.action_space.sample()
-    print(env.step(actions))
+    observations, rewards, done, truncated, info = env.step(actions)
+        # observations : (array([2., 5., 2., 1., 0., 2., 6., 3., 1.], dtype=float32), array([2., 5., 2., 6., 3., 1., 1., 0., 2.], dtype=float32))
+        # rewards : [0, 0]
+        # done : False
+        # truncated : False
+        # info : {}  
     env.render()
 
