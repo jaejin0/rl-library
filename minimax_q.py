@@ -1,8 +1,6 @@
-# lbf environment library
 import gymnasium as gym
 import lbforaging
 import time
-
 import numpy as np
 
 # Joint-Action Learning with Game Theory 
@@ -31,19 +29,46 @@ for t = 0, 1, 2, ... do
 # you need to call this class for each agents
 class MinimaxQ:
     # 6 inputs : (N, S, A, gamma, alpha, epsilon) 
-    def __init__(self, num_agents, discount_factor, learning_rate, exploration_parameter):
-        self.num_agents = num_agents
-        
-        # state space and action space doesn't have to be known for this implementation as it uses a hashmap to store values
+    def __init__(self, num_agents, action_space, discount_factor, learning_rate, exploration_parameter):
+        self.num_agents = num_agents 
+        # state space doesn't have to be known for this implementation as it uses a hashmap to store values
         # self.state_space = state_space
-        # self.action_space = action_space
+        self.action_space = action_space
         self.discount_factor = discount_factor
         self.learning_rate = learning_rate
         self.exploration_parameter = exploration_parameter
 
-        # defining normal form game for each state
+        # defining normal form game for each agents. (state, action) : Q value
         self.action_value_function = [{} for i in range(self.num_agents)]
-        print(self.action_value_function) 
+
+    def policy(self, observation):
+        return np.int64(1)
+
+        # explore
+        discrete_joint_action = []
+        for i in range(self.n_agents):
+            discrete_joint_action.append(torch.randint(low = self.joint_action_space[0].start, high = self.joint_action_space[0].n, size = (1,)))
+        discrete_joint_action = tuple(discrete_joint_action)
+         
+        choose_random_joint_action = np.random.binomial(1, self.exploration_parameter)
+        if not choose_random_joint_action: # exploit based on exploration parameter
+            max_value = 0
+            for k in self.joint_action_value_table:
+                if k[0] != discrete_joint_observation:
+                    continue
+
+                if self.joint_action_value_table[k] > max_value:
+                    max_value = self.joint_action_value_table[k]
+                    discrete_joint_action = k[1]
+
+        self.prev_discrete_joint_observation = discrete_joint_observation
+        self.prev_discrete_joint_action = discrete_joint_action
+
+        return discrete_joint_action
+
+
+
+    # def learn(self, )
 
 if __name__ == '__main__':
 
@@ -55,17 +80,21 @@ if __name__ == '__main__':
 
     # environment initialization
     env = gym.make(f"Foraging-8x8-{num_agents}p-1f-v3")
-    obs = env.reset()
+    action_space = env.action_space # action_space : Tuple(Discrete(6), Discrete(6))
+    observations = env.reset()
 
     # agent initialization (independent learning)
     agents = []
     for i in range(num_agents):
-        agents.append(MinimaxQ(num_agents, discount_factor, learning_rate, exploration_parameter))
+        agents.append(MinimaxQ(num_agents, action_space, discount_factor, learning_rate, exploration_parameter))
 
     max_steps = 1000
     for _ in range(max_steps):
         time.sleep(0.5)
-        actions = env.action_space.sample()
+        # actions = env.action_space.sample()
+        actions = [] # actions : (np.int64(3), np.int64(0)) 
+        for i in range(num_agents):
+            actions.append(agents[i].policy(observations[i]))
         observations, rewards, done, truncated, info = env.step(actions)
             # observations : (array([2., 5., 2., 1., 0., 2., 6., 3., 1.], dtype=float32), array([2., 5., 2., 6., 3., 1., 1., 0., 2.], dtype=float32))
             # rewards : [0, 0]
