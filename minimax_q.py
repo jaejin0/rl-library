@@ -30,7 +30,7 @@ for t = 0, 1, 2, ... do
 # This is a MinimaxQ algorithm for a single agent, as it is independent learning, not central learning.
 # you need to call this class for each agents
 class MinimaxQ:
-    # 5 inputs: 
+    # 6 inputs : (N, S, A, gamma, alpha, epsilon) 
     def __init__(self, num_agents, discount_factor, learning_rate, exploration_parameter):
         self.num_agents = num_agents
         
@@ -54,11 +54,11 @@ if __name__ == '__main__':
     exploration_parameter = 0.2 
 
     # environment initialization
-    env = gym.make("Foraging-8x8-2p-1f-v3")
+    env = gym.make(f"Foraging-8x8-{num_agents}p-1f-v3")
     obs = env.reset()
 
     # agent initialization 
-    agent = MinimaxQ() 
+    agent = MinimaxQ(num_agents, discount_factor, learning_rate, exploration_parameter)
 
     max_steps = 1000
     for _ in range(max_steps):
