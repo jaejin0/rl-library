@@ -31,10 +31,12 @@ for t = 0, 1, 2, ... do
 # you need to call this class for each agents
 class MinimaxQ:
     # 5 inputs: 
-    def __init__(self, num_agents, state_space, action_space, discount_factor, learning_rate, exploration_parameter):
+    def __init__(self, num_agents, discount_factor, learning_rate, exploration_parameter):
         self.num_agents = num_agents
-        self.state_space = state_space
-        self.action_space = action_space
+        
+        # state space and action space doesn't have to be known for this implementation as it uses a hashmap to store values
+        # self.state_space = state_space
+        # self.action_space = action_space
         self.discount_factor = discount_factor
         self.learning_rate = learning_rate
         self.exploration_parameter = exploration_parameter
