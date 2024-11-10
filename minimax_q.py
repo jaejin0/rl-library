@@ -48,24 +48,14 @@ if __name__ == '__main__':
     learning_rate = 0.1
     exploration_parameter = 0.2 
 
-    # env.observation_space(agent) = Box(0, 255, (210, 160, 3), uint8)
-    # env.action_space(agent) = Discrete(6)
-    env = basketball_pong_v3.env(render_mode="human")
-    env.reset()
-    print(env.agent_iter()) 
-    # agents = MinimaxQ(num_agents, )
+    env = gym.make("Foraging-8x8-2p-1f-v3")
+    obs = env.reset()
 
-    for agent in env.agent_iter():
-        observation, reward, termination, truncation, info = env.last()
-        print(observation)
-        if termination or truncation:
-            action = None
-        else:
-            # this is where you would insert your policy
-            action = env.action_space(agent).sample()
-        input()
-        env.step(action)
-    env.close()
-
-
+    max_steps = 1000
+    for _ in range(max_steps):
+        time.sleep(0.5)
+        actions = env.action_space.sample()
+        print(env.step(actions))
+        env.render()
+          
 
