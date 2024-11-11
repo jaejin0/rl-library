@@ -5,6 +5,12 @@ class Generator():
     def __init__():
 
 
+    def policy(self, random_input):
+        pass
+        
+        return sample
+
+class Discriminator():
     '''
     input : camera, speed, target, command, action
         camera : 9x144x256 (3 cameras with 3 colors)
@@ -19,8 +25,5 @@ class Generator():
         throttle : 1x1
         D(s, a) : 1x1
     '''
-    def policy(self, camera, speed, target, command, action):
 
-        
-            
-            V(s), Steer, Throttle
+

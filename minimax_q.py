@@ -38,13 +38,18 @@ class MinimaxQ:
         self.learning_rate = learning_rate
         self.exploration_parameter = exploration_parameter
 
-        print(self.action_space[0])
-
         # defining normal form game for each agents. (state, action) : Q value
         self.action_value_function = [{} for i in range(self.num_agents)]
 
     def policy(self, observation):
-        return np.int64(1)
+        # return np.int64(1)
+
+        # random action
+        action = env.action_space.sample() 
+
+        explore = np.random.binomial(1, self.exploration_parameter)
+        if not explore: # exploit
+             # solve self.action_value_function
 
         # explore
         discrete_joint_action = []
