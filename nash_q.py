@@ -49,30 +49,7 @@ class NashQ:
 
         explore = np.random.binomial(1, self.exploration_parameter)
         if not explore: # exploit
-             # solve self.action_value_function
-
-        # explore
-        discrete_joint_action = []
-        for i in range(self.n_agents):
-            discrete_joint_action.append(torch.randint(low = self.joint_action_space[0].start, high = self.joint_action_space[0].n, size = (1,)))
-        discrete_joint_action = tuple(discrete_joint_action)
-         
-        choose_random_joint_action = np.random.binomial(1, self.exploration_parameter)
-        if not choose_random_joint_action: # exploit based on exploration parameter
-            max_value = 0
-            for k in self.joint_action_value_table:
-                if k[0] != discrete_joint_observation:
-                    continue
-
-                if self.joint_action_value_table[k] > max_value:
-                    max_value = self.joint_action_value_table[k]
-                    discrete_joint_action = k[1]
-
-        self.prev_discrete_joint_observation = discrete_joint_observation
-        self.prev_discrete_joint_action = discrete_joint_action
-
-        return discrete_joint_action
-
+             # solve Nash Equilibrium in self.action_value_function
 
 
     # def learn(self, )
@@ -93,7 +70,7 @@ if __name__ == '__main__':
     # agent initialization (independent learning)
     agents = []
     for i in range(num_agents):
-        agents.append(MinimaxQ(num_agents, action_space[i], discount_factor, learning_rate, exploration_parameter))
+        agents.append(NashQ(num_agents, action_space[i], discount_factor, learning_rate, exploration_parameter))
 
     max_steps = 1000
     for _ in range(max_steps):
