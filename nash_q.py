@@ -25,9 +25,9 @@ for t = 0, 1, 2, ... do
         Q_j(s^t, a^t) <- Q_j(s^t, a^t) + alpha[r^t_j + gamma * Value_j(Gamma_{s^{t+1}}) - Q_j(s^t, a^t)]
 '''
 
-# This is a MinimaxQ algorithm for a single agent, as it is independent learning, not central learning.
+# This is a NashQ algorithm for a single agent, as it is independent learning, not central learning.
 # you need to call this class for each agents
-class MinimaxQ:
+class NashQ:
     # 6 inputs : (N, S, A, gamma, alpha, epsilon) 
     def __init__(self, num_agents, action_space, discount_factor, learning_rate, exploration_parameter):
         self.num_agents = num_agents 
