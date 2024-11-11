@@ -38,6 +38,8 @@ class MinimaxQ:
         self.learning_rate = learning_rate
         self.exploration_parameter = exploration_parameter
 
+        print(self.action_space[0])
+
         # defining normal form game for each agents. (state, action) : Q value
         self.action_value_function = [{} for i in range(self.num_agents)]
 
@@ -86,7 +88,7 @@ if __name__ == '__main__':
     # agent initialization (independent learning)
     agents = []
     for i in range(num_agents):
-        agents.append(MinimaxQ(num_agents, action_space, discount_factor, learning_rate, exploration_parameter))
+        agents.append(MinimaxQ(num_agents, action_space[i], discount_factor, learning_rate, exploration_parameter))
 
     max_steps = 1000
     for _ in range(max_steps):
