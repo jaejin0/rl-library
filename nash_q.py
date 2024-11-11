@@ -29,7 +29,8 @@ for t = 0, 1, 2, ... do
 # you need to call this class for each agents
 class NashQ:
     # 6 inputs : (N, S, A, gamma, alpha, epsilon) 
-    def __init__(self, num_agents, action_space, discount_factor, learning_rate, exploration_parameter):
+    def __init__(self, agent_id, num_agents, action_space, discount_factor, learning_rate, exploration_parameter):
+        self.agent_id = agent_id # this parameter is for a convention of implementation
         self.num_agents = num_agents 
         # state space doesn't have to be known for this implementation as it uses a hashmap to store values
         # self.state_space = state_space
@@ -44,14 +45,35 @@ class NashQ:
     def policy(self, observation):
         # return np.int64(1)
 
-        # random action
-        action = env.action_space.sample() 
-
+        # explore : random action
+        action = self.action_space.sample() 
+        
+        # coin flip
         explore = np.random.binomial(1, self.exploration_parameter)
+        
         if not explore: # exploit
-             # solve Nash Equilibrium in self.action_value_function
+            # solve Nash Equilibrium in self.action_value_function
+            for i in range(self.num_agents):
+                if i == self.agent_id: # finding maximizing action choices of other agents
+                    continue
+
+                # TODO : implement how NE assumes other agents' policies. Does it assume to be NE? Pareto Optimal?
+                other_agent_max_value, other_agent_max_action = 0, self.action_space.sample()
+                for other_agent_a in range(self.action_space.n):
+                    for a in range(self.action_space.n):
+                        if other_agent_max_value < self.action_value_function[i].get((observation, ), 0):
+                            other_agent_max_value = self.action_value_function[i].get((observation, a), 0)
+                            other_agent_max_action = a
+
+            # TODO : based on the other action, find the best response to the action
+            max_value, max_action = 0, action
+            for a in range(self.action_space.n):
+                if max_value < self.action_value_function[self.agent_id].get((observation, ), 0):
+                    max_ac
 
 
+
+        return action
     # def learn(self, )
 
 if __name__ == '__main__':
@@ -70,7 +92,7 @@ if __name__ == '__main__':
     # agent initialization (independent learning)
     agents = []
     for i in range(num_agents):
-        agents.append(NashQ(num_agents, action_space[i], discount_factor, learning_rate, exploration_parameter))
+        agents.append(NashQ(i, num_agents, action_space[i], discount_factor, learning_rate, exploration_parameter))
 
     max_steps = 1000
     for _ in range(max_steps):
