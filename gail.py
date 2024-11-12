@@ -46,7 +46,18 @@ class Discriminator(nn.Module):
         return self.network(x)
 
 class ExpertBuffer:
-    def __init__
+    def __init__(self, max_size=10000):
+        self.buffer = deque(maxlen=max_size)
+
+    def push(self, state, action):
+        self.buffer.append((state, action))
+
+    def sample(self, batch_size):
+        indices = np.random.randint(0, len(self.buffer), size=batch_size)
+        states, actions = zip(*[self.buffer[idx] for idx in indices])
+        return torch.FloatTensor(states), torch.FloatTensor(actions)
+
+
 
 class Discriminator():
     '''
