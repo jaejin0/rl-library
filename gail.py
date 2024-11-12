@@ -33,8 +33,20 @@ class Discriminator(nn.Module):
         super(Discrminator, self).__init__()
 
         self.network = nn.Sequential(
+            nn.Linear(state_dim + action-dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim)
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+            nn.Sigmoid()
         )
 
+    def forward(self, state, action):
+        x = torch.cat([state, action]), dim=-1)
+        return self.network(x)
+
+class ExpertBuffer:
+    def __init__
 
 class Discriminator():
     '''
