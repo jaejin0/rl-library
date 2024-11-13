@@ -32,19 +32,19 @@ class Generator(nn.Module):
 
 class Discriminator(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim=256):
-        super(Discrminator, self).__init__()
+        super(Discriminator, self).__init__()
 
         self.network = nn.Sequential(
-            nn.Linear(state_dim + action-dim, hidden_dim),
+            nn.Linear(state_dim + action_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim)
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
             nn.Sigmoid()
         )
 
     def forward(self, state, action):
-        x = torch.cat([state, action]), dim=-1)
+        x = torch.cat([state, action], dim=-1)
         return self.network(x)
 
 class ExpertBuffer:
@@ -119,11 +119,11 @@ class GAIL:
     def train(self, num_episodes=1000, steps_per_episodes=1000):
         for episode in range(num_episodes):
             states, actions, rewards = [], [], []
-            state = self.env.reset()
-
-            for step in range(steps_per_episode):
+            state = self.env.reset()[0]
+            
+            for step in range(steps_per_episodes):
                 action = self.select_action(state)
-                next_state, _, done, _ = self.env.step(action)
+                next_state, _, terminated, truncated, _ = self.env.step(action)
 
                 reward = self.compute_discriminator_reward(state, action)
 
@@ -131,7 +131,7 @@ class GAIL:
                 actions.append(action)
                 rewards.append(reward)
 
-                if done:
+                if terminated or truncated:
                     break
 
                 state = next_state
@@ -157,14 +157,14 @@ class GAIL:
 
 
 def main():
-    env = env.make('CarRacing-v0')
+    env = gym.make('HalfCheetah-v4')
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
 
     expert_buffer = ExpertBuffer()
 
     gail = GAIL(env, state_dim, action_dim, expert_buffer)
-    gail.train
+    gail.train()
 
 if __name__ == "__main__":
     main()
