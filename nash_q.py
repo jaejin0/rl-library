@@ -53,17 +53,21 @@ class NashQ:
         
         if not explore: # exploit
             # solve Nash Equilibrium in self.action_value_function
+            other_agent_max_actions = []
             for i in range(self.num_agents):
                 if i == self.agent_id: # finding maximizing action choices of other agents
                     continue
 
-                # TODO : implement how NE assumes other agents' policies. Does it assume to be NE? Pareto Optimal?
+                # predicting other agents' actions
+                # assume other agents choose an action that maximize Q value, given other agent's max_actions
                 other_agent_max_value, other_agent_max_action = 0, self.action_space.sample()
                 for other_agent_a in range(self.action_space.n):
                     for a in range(self.action_space.n):
                         if other_agent_max_value < self.action_value_function[i].get((observation, ), 0):
                             other_agent_max_value = self.action_value_function[i].get((observation, a), 0)
                             other_agent_max_action = a
+
+                other_agent_max_actions.append(other_agent_max_action)
 
             # TODO : based on the other action, find the best response to the action
             max_value, max_action = 0, action
