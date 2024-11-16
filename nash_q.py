@@ -53,17 +53,18 @@ class NashQ:
         
         if not explore: # exploit
             # solve Nash Equilibrium in self.action_value_function
-            other_agent_max_actions = []
+            every_actions = [self.action_space.sample() for i in range(self.num_agents)]
+            print(every_actions)
             for i in range(self.num_agents):
                 if i == self.agent_id: # finding maximizing action choices of other agents
                     continue
 
                 # predicting other agents' actions
                 # assume other agents choose an action that maximize Q value, given other agent's max_actions
-                other_agent_max_value, other_agent_max_action = 0, self.action_space.sample()
-                for other_agent_a in range(self.action_space.n):
-                    for a in range(self.action_space.n):
-                        if other_agent_max_value < self.action_value_function[i].get((observation, ), 0):
+                max_value, max_action = 0, every_actions[self.agent_id]
+                for a in range(self.action_space.n):
+                    every_action[self.agent_id] = a
+                    if max_value < self.action_value_function[i].get((observation, ), 0):
                             other_agent_max_value = self.action_value_function[i].get((observation, a), 0)
                             other_agent_max_action = a
 
