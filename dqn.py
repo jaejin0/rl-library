@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import gymnasium as gym
@@ -29,7 +30,9 @@ class QNetwork(nn.Module):
         )
         
     def forward(self, observation):
-        return self.network(observation)
+        action_prob = self.network(observation)
+        action_prob = F.softmax(action_prob, dim=0)
+        return action_prob
 
 class DQN:
     def __init__(self, observation_dim, action_dim, batch_size, buffer_size, exploration_parameter):
@@ -58,10 +61,11 @@ class DQN:
         else: # exploit
             observation = torch.from_numpy(observation)
             observation = observation.to(self.device)
-            action_prob = self.value_network(observation)
+            action_prob = self.value_network(observation).cpu().detach()
+            action_prob = action_prob.numpy()
             action = np.random.choice(range(self.action_dim), p=action_prob)
         print(action)
-
+        return action
 if __name__ == "__main__": 
     # configuration
     num_episodes = 1000
@@ -84,7 +88,7 @@ if __name__ == "__main__":
         for step in range(max_steps):
             # action = env.action_space.sample()
             action = agent.policy(observation)
-
+            action = 0
             observation, reward, terminated, truncated, info = env.step(action)
             total_reward += reward
             if terminated or truncated:
