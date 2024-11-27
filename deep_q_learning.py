@@ -7,16 +7,15 @@ import gymnasium as gym
 from collections import deque
 import random
 
-class ReplayBuffer:
-    def __init__(self, capacity):
-        self.buffer = deque(maxlen=capacity)
-    
-    def push(self, state, action, reward, next_state, done):
-        self.buffer.append((state, action, reward, next_state, done))
+'''
+difference between Deep Q Learning and Deep Q Network
 
-    def sample(self, batch_size):
-        states, actions, rewards, next_states, dones = zip(*random.sample(self.buffer, batch_size))
-        return (np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones))
+Deep Q Learning uses a single neural network for its Q function and updates its policy network for every iteration
+
+Deep Q Network uses two neural network for its Q function and target network, to solve the "moving target problem"
+by providing stationary of the target.
+Q function or Q network is trained more often than target network.
+'''
 
 class QNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -34,7 +33,7 @@ class QNetwork(nn.Module):
         action_prob = F.softmax(action_prob, dim=0)
         return action_prob
 
-class DQN:
+class DeepQLearning:
     def __init__(self, observation_dim, action_dim, batch_size, buffer_size, exploration_parameter):
         self.observation_dim = observation_dim
         self.action_dim = action_dim 
