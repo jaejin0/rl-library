@@ -61,11 +61,13 @@ class DQN:
         else: # exploit
             observation = torch.from_numpy(observation)
             observation = observation.to(self.device)
-            action_prob = self.value_network(observation).cpu().detach()
+            action_prob = self.value_network(observation).cpu().detach() 
             action_prob = action_prob.numpy()
+
+            # instead of argmax, I used a random-action approach
             action = np.random.choice(range(self.action_dim), p=action_prob)
-        print(action)
         return action
+
 if __name__ == "__main__": 
     # configuration
     num_episodes = 1000
@@ -88,10 +90,28 @@ if __name__ == "__main__":
         for step in range(max_steps):
             # action = env.action_space.sample()
             action = agent.policy(observation)
-            action = 0
-            observation, reward, terminated, truncated, info = env.step(action)
+            next_observation, reward, terminated, truncated, info = env.step(action)
+            agent.replay_buffer.push(observation, action, reward, next_observation, terminated or truncated)
+
+            observation = next_observation
             total_reward += reward
             if terminated or truncated:
                break
-        print(ep, total_reward) 
+
+
+        print(ep, total_reward)
+
+
+
+
+
+    print("Learning is done!")    
+    while True:
+        observation, info = env.reset()
+        for step in range(max_steps):
+            action = agent.policy(observation)
+            observation, reward, terminated, truncated, info = env.step(action)
+            if terminated or trunctated:
+                break
+
     env.close()
