@@ -34,12 +34,12 @@ class QNetwork(nn.Module):
         return action_prob
 
 class DeepQLearning:
-    def __init__(self, observation_dim, action_dim, batch_size, buffer_size, exploration_parameter):
+    def __init__(self, observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate):
         self.observation_dim = observation_dim
         self.action_dim = action_dim 
-        self.batch_size = batch_size
-        
+       
         self.exploration_parameter = exploration_parameter
+        self.discount_factor = discount_factor
 
         if torch.backends.mps.is_available():
             self.device = "mps"
@@ -50,9 +50,9 @@ class DeepQLearning:
         print("device: ", self.device)
 
         self.value_network = QNetwork(observation_dim, action_dim).to(self.device)
-        self.target_network = QNetwork(observation_dim, action_dim).to(self.device)
-        self.replay_buffer = ReplayBuffer(buffer_size)
-   
+        self.loss_function = nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.Adam(self.value_network.parameters(), learning_rate) 
+
     def policy(self, observation):
         explore = np.random.binomial(1, self.exploration_parameter)
         if explore:
@@ -67,20 +67,37 @@ class DeepQLearning:
             action = np.random.choice(range(self.action_dim), p=action_prob)
         return action
 
+    def learn(self, observation, action, reward, next_observation, done):
+ 
+        action_prob = self.value_network(observation).cpu().detach()
+        action_prob = action_prob.numpy()
+        
+        if done:
+            target_value = reward
+        else: 
+            target_prob = self.value_network(next_observation).cpu().detach()
+            traget_prob = target_prob.numpy()
+
+        loss = self.loss_function(action_prob, target_prob)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+
 if __name__ == "__main__": 
     # configuration
     num_episodes = 1000
     max_steps = 1000
-    batch_size = 64
-    buffer_size = 10000
-
-    exploration_parameter = 0.2
+    exploration_parameter = 0.1
+    discount_factor = 0.5
+    learning_rate = 0.001
 
     # initialization
     env = gym.make("CartPole-v1", render_mode="human")
     observation_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
-    agent = DQN(observation_dim, action_dim, batch_size, buffer_size, exploration_parameter) 
+    agent = DeepQLearning(observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate) 
 
     for ep in range(num_episodes):
         observation, info = env.reset()
@@ -90,13 +107,17 @@ if __name__ == "__main__":
             # action = env.action_space.sample()
             action = agent.policy(observation)
             next_observation, reward, terminated, truncated, info = env.step(action)
-            agent.replay_buffer.push(observation, action, reward, next_observation, terminated or truncated)
-
+            agent.learn(observation, action, reward, next_observation, terminated or truncated)
             observation = next_observation
             total_reward += reward
             if terminated or truncated:
-               break
-
+                # target y^t <- r^t
+                break 
+            else:
+                # target y^t <- r^t + gamma Q(s^{t+1}, a'; theta)
+                pass
+            # compute loss
+            # train the model
 
         print(ep, total_reward)
 
