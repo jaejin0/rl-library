@@ -17,15 +17,29 @@ by providing stationary of the target.
 Q function or Q network is trained more often than target network.
 '''
 
+class ReplayBuffer:
+    def __init__(self, capacity):
+        self.buffer = deque(maxlen=capacity)
+    
+    def __len__(self):
+        return len(self.buffer)
+
+    def push(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
+
+    def sample(self, batch_size):
+        states, actions, rewards, next_states, dones = zip(*random.sample(self.buffer, batch_size))
+        return states, actions, rewards, next_states, dones
+
 class QNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(QNetwork, self).__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_dim, 128),
+            nn.Linear(input_dim, 64),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(128, output_dim)
+            nn.Linear(64, output_dim)
         )
         
     def forward(self, observation):
@@ -34,7 +48,7 @@ class QNetwork(nn.Module):
         return action_prob
 
 class DeepQLearning:
-    def __init__(self, observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate):
+    def __init__(self, observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate, buffer_size, batch_size):
         self.observation_dim = observation_dim
         self.action_dim = action_dim 
        
@@ -51,77 +65,92 @@ class DeepQLearning:
 
         self.value_network = QNetwork(observation_dim, action_dim).to(self.device)
         self.loss_function = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.value_network.parameters(), learning_rate) 
+        self.optimizer = torch.optim.Adam(self.value_network.parameters(), lr=learning_rate) 
+        self.replay_buffer = ReplayBuffer(buffer_size)
+        self.batch_size = batch_size
 
     def policy(self, observation):
         explore = np.random.binomial(1, self.exploration_parameter)
         if explore:
             action = random.randrange(self.action_dim)
+            action = torch.tensor(action).to(self.device)
         else: # exploit
-            observation = torch.from_numpy(observation)
-            observation = observation.to(self.device)
-            action_prob = self.value_network(observation).cpu().detach() 
-            action_prob = action_prob.numpy()
+            with torch.no_grad():
+                action_prob = self.value_network.forward(observation) 
 
             # instead of argmax, I used a random-action approach
-            action = np.random.choice(range(self.action_dim), p=action_prob)
+            # action = np.random.choice(range(self.action_dim), p=action_prob)
+            # action = action_prob.argmax() 
+            action = action_prob.multinomial(num_samples=1, replacement=True).squeeze() 
         return action
 
-    def learn(self, observation, action, reward, next_observation, done):
- 
-        action_prob = self.value_network(observation).cpu().detach()
-        action_prob = action_prob.numpy()
-        
-        if done:
-            target_value = reward
-        else: 
-            target_prob = self.value_network(next_observation).cpu().detach()
-            traget_prob = target_prob.numpy()
+    def learn(self):
+        observations, actions, rewards, next_observations, dones = self.replay_buffer.sample(self.batch_size)
+        observations = torch.stack(observations)
+        actions = torch.stack(actions)
+        rewards = torch.stack(rewards)
+        next_observations = torch.stack(next_observations)
+        dones = torch.tensor(dones).float().to(self.device)
 
-        loss = self.loss_function(action_prob, target_prob)
+        with torch.no_grad():
+            target_value = rewards + (1 - dones) * self.discount_factor * self.value_network(next_observations).max(dim=1)[0]
+        current_value = self.value_network(observations).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+        loss = self.loss_function(current_value, target_value)
 
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
+        self.optimizer.zero_grad() # clear gradients
+        loss.backward() # compute gradients (backpropagation)
+        self.optimizer.step() # update network parameters
 
 if __name__ == "__main__": 
     # configuration
     num_episodes = 1000
     max_steps = 1000
-    exploration_parameter = 0.1
-    discount_factor = 0.5
-    learning_rate = 0.001
-
+    exploration_parameter = 1.00
+    exploration_end = 0.001
+    exploration_decay = 0.995
+    discount_factor = 0.99
+    learning_rate = 0.01
+    buffer_size = 100000
+    batch_size = 32
     # initialization
     env = gym.make("CartPole-v1", render_mode="human")
     observation_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
-    agent = DeepQLearning(observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate) 
+    agent = DeepQLearning(observation_dim, action_dim, exploration_parameter, discount_factor, learning_rate, buffer_size, batch_size) 
 
+
+    reward_logs = []
     for ep in range(num_episodes):
         observation, info = env.reset()
+        observation = torch.tensor(observation).to(agent.device)
         total_reward = 0
 
         for step in range(max_steps):
             # action = env.action_space.sample()
             action = agent.policy(observation)
-            next_observation, reward, terminated, truncated, info = env.step(action)
-            agent.learn(observation, action, reward, next_observation, terminated or truncated)
+            next_observation, reward, terminated, truncated, info = env.step(action.item())
+            
+            next_observation = torch.tensor(next_observation).to(agent.device)
+            reward = torch.tensor(reward).to(agent.device)
+
+            agent.replay_buffer.push(observation, action, reward, next_observation, terminated or truncated)
+            
+            if len(agent.replay_buffer) >= batch_size:
+                agent.learn()
+            
+            # transition
             observation = next_observation
-            total_reward += reward
+            if agent.exploration_parameter >= exploration_end:
+                agent.exploration_parameter *= exploration_decay
+            total_reward += reward.item()
+            
             if terminated or truncated:
-                # target y^t <- r^t
                 break 
-            else:
-                # target y^t <- r^t + gamma Q(s^{t+1}, a'; theta)
-                pass
-            # compute loss
-            # train the model
+        
+        reward_logs.append(total_reward)
 
-        print(ep, total_reward)
-
-
+        if ep % 10 == 0:
+            print(ep, ": average reward of last 10 episodes: ", np.mean(reward_logs[-10:]))
 
 
 
@@ -131,7 +160,7 @@ if __name__ == "__main__":
         for step in range(max_steps):
             action = agent.policy(observation)
             observation, reward, terminated, truncated, info = env.step(action)
-            if terminated or trunctated:
+            if terminated or truncated:
                 break
 
     env.close()
