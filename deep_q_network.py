@@ -101,7 +101,6 @@ def optimize_model():
     # detailed explanation). This converts batch-array of Transitions
     # to Transition of batch-arrays.
     batch = Transition(*zip(*transitions))
-
     # Compute a mask of non-final states and concatenate the batch elements
     # (a final state would've been the one after which simulation ended)
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
@@ -109,7 +108,9 @@ def optimize_model():
     non_final_next_states = torch.cat([s for s in batch.next_state
                                                 if s is not None])
     state_batch = torch.cat(batch.state)
+    print(batch.action)
     action_batch = torch.cat(batch.action)
+    print(action_batch) 
     reward_batch = torch.cat(batch.reward)
 
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
@@ -192,12 +193,14 @@ if __name__ == "__main__":
             observation, reward, terminated, truncated, _ = env.step(action.item())
             reward = torch.tensor([reward], device=device)
             done = terminated or truncated
-
+            
             if terminated:
                 next_state = None
             else:
                 next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
+            print(state, action, reward, next_state)
+           
             # Store the transition in memory
             memory.push(state, action, next_state, reward)
 
