@@ -93,10 +93,14 @@ class DeepQLearning:
         dones = torch.tensor(dones).float().to(self.device)
 
         with torch.no_grad():
-            target_value = rewards + (1 - dones) * self.discount_factor * self.value_network(next_observations).max(dim=1)[0]
+            next_max_q = self.value_network(next_observation)
+            next_max_q = torch.max(next_max_q)
+            # target_value = rewards + (1 - dones) * self.discount_factor * next_max_q.item()
+            target_value = rewards + self.discount_factor * next_max_q.item()
         current_value = self.value_network(observations).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+        
         loss = self.loss_function(current_value, target_value)
-
+        
         self.optimizer.zero_grad() # clear gradients
         loss.backward() # compute gradients (backpropagation)
         self.optimizer.step() # update network parameters
@@ -133,7 +137,7 @@ if __name__ == "__main__":
             next_observation = torch.tensor(next_observation).to(agent.device)
             reward = torch.tensor(reward).to(agent.device)
 
-            agent.replay_buffer.push(observation, action, reward, next_observation, terminated or truncated)
+            agent.replay_buffer.push(observation, action, reward, next_observation, terminated) # or truncated) truncated is not included as it does not count make reward 0
             
             if len(agent.replay_buffer) >= batch_size:
                 agent.learn()
@@ -156,9 +160,9 @@ if __name__ == "__main__":
 
     print("Learning is done!")    
     while True:
-        observation, info = env.reset()
+        observation, info = env.reset() 
         for step in range(max_steps):
-            action = agent.policy(observation)
+            action = agent.policy(torch.tensor(observation).to(agent.device))
             observation, reward, terminated, truncated, info = env.step(action.item())
             if terminated or truncated:
                 break

@@ -108,9 +108,7 @@ def optimize_model():
     non_final_next_states = torch.cat([s for s in batch.next_state
                                                 if s is not None])
     state_batch = torch.cat(batch.state)
-    print(batch.action)
     action_batch = torch.cat(batch.action)
-    print(action_batch) 
     reward_batch = torch.cat(batch.reward)
 
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
@@ -199,8 +197,6 @@ if __name__ == "__main__":
             else:
                 next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
-            print(state, action, reward, next_state)
-           
             # Store the transition in memory
             memory.push(state, action, next_state, reward)
 
