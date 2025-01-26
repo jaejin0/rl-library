@@ -35,11 +35,11 @@ class QNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(QNetwork, self).__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(64, output_dim)
+            nn.Linear(128, output_dim)
         )
         
     def forward(self, observation):
@@ -64,8 +64,8 @@ class DeepQLearning:
         print("device: ", self.device)
 
         self.value_network = QNetwork(observation_dim, action_dim).to(self.device)
-        self.loss_function = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.value_network.parameters(), lr=learning_rate) 
+        self.loss_function = nn.SmoothL1Loss()
+        self.optimizer = torch.optim.AdamW(self.value_network.parameters(), lr=learning_rate) 
         self.replay_buffer = ReplayBuffer(buffer_size)
         self.batch_size = batch_size
 
@@ -105,13 +105,13 @@ if __name__ == "__main__":
     # configuration
     num_episodes = 1000
     max_steps = 1000
-    exploration_parameter = 1.00
-    exploration_end = 0.001
-    exploration_decay = 0.995
+    exploration_parameter = 0.9
+    exploration_end = 0.05
+    exploration_decay = 0.997
     discount_factor = 0.99
-    learning_rate = 0.01
-    buffer_size = 100000
-    batch_size = 32
+    learning_rate = 0.0001
+    buffer_size = 10000
+    batch_size = 128
     # initialization
     env = gym.make("CartPole-v1", render_mode="human")
     observation_dim = env.observation_space.shape[0]
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         observation, info = env.reset()
         for step in range(max_steps):
             action = agent.policy(observation)
-            observation, reward, terminated, truncated, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action.item())
             if terminated or truncated:
                 break
 
