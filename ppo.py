@@ -3,14 +3,15 @@ import torch.nn as nn
 from torch.distributions import MultivariateNormal
 import numpy as np
 import gymnasium as gym
+import os
 
 '''
 Proximal Policy Optimization (PPO) is an on-policy, policy gradient method.
 '''
 
-# if torch.backends.mps.is_available():
-#     device = "mps"
-if torch.cuda.is_available():
+if torch.backends.mps.is_available():
+    device = "mps"
+elif torch.cuda.is_available():
     device = "cuda"
 else:
     device = 'cpu'
@@ -62,7 +63,7 @@ class ActorCritic(nn.Module):
     def act(self, observation):
         action_mean = self.actor(observation)
         cov_mat = torch.diag(self.action_var).unsqueeze(dim=0)
-        dist = MultivariateNormal(action_mean, cov_mat) # gaussian distribution
+        dist = MultivariateNormal(action_mean.cpu(), cov_mat.cpu()) # gaussian distribution
 
         action = dist.sample()
         action_logprob = dist.log_prob(action)
@@ -74,10 +75,10 @@ class ActorCritic(nn.Module):
         action_mean = self.actor(state)
         action_var = self.action_var.expand_as(action_mean)
         cov_mat = torch.diag_embed(action_var).to(device)
-        dist = MultivariateNormal(action_mean, cov_mat)
+        dist = MultivariateNormal(action_mean.cpu(), cov_mat.cpu())
 
-        action_logprobs = dist.log_prob(action)
-        dist_entropy = dist.entropy()
+        action_logprobs = dist.log_prob(action.cpu()).to(device)
+        dist_entropy = dist.entropy().to(device)
         state_values = self.critic(state)
 
         return action_logprobs, state_values, dist_entropy
@@ -167,63 +168,85 @@ class PPO:
         
         self.buffer.clear()
 
+    def save(self, checkpoint_path):
+        torch.save(self.policy_old.state_dict(), checkpoint_path)
+
+    def load(self, checkpoint_path):
+        self.policy_old.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+        self.policy.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+
 if __name__ == "__main__": 
 
     # configuration
-    num_episodes = 3000
+    env_name = "BipedalWalker-v3"
+
+    max_total_steps = int(3e6)
     max_steps = 1000
+    
     lr_actor = 0.0001
     lr_critic = 0.001
+    
     discount_factor = 0.99
     eps_clip = 0.2 
     K_epochs = 80
+    
     initial_action_std = 0.6
-    action_std_decay = 0.001
-    action_std_min = 0.2
+    action_std_decay = 0.05
+    action_std_min = 0.1
+    
+    update_freq = max_steps * 4
+    action_std_decay_freq = int(2.5e5)
+    save_model_freq = int(1e5)
+    
+    directory = "PPO_pretrained"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    checkpoint_path = directory + f"/PPO_{env_name}.pth"
 
     # initialization
-    env = gym.make("BipedalWalker-v3", hardcore=True, render_mode="human")
+    env = gym.make(env_name, render_mode="human")
     observation_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0] 
     agent = PPO(observation_dim, action_dim, lr_actor, lr_critic, 
                 discount_factor, eps_clip, K_epochs, initial_action_std) 
 
     reward_logs = []
-    for ep in range(num_episodes):
+    t = 0
+    while t <= max_total_steps:
         observation, info = env.reset()
-        # observation = torch.tensor(observation).to(agent.device)
-        total_reward = 0
-
+        current_ep_reward = 0
         for step in range(max_steps):
-            # action = env.action_space.sample()
             action = agent.select_action(observation)
             next_observation, reward, terminated, truncated, info = env.step(action)
             
             agent.buffer.rewards.append(reward)
-            agent.buffer.dones.append(terminated or truncated)
+            agent.buffer.dones.append(terminated)
 
-            total_reward += reward
-            
+            t += 1
+            current_ep_reward += reward
+           
+            if t % update_freq == 0: 
+                agent.update()
+
+            if t % action_std_decay_freq == 0:
+                agent.decay_action_std(action_std_decay, action_std_min)
+
+            if t % save_model_freq == 0:
+                agent.save(checkpoint_path)
+
             if terminated or truncated:
                 break 
-        
-        reward_logs.append(total_reward)
- 
-        agent.update()
-        agent.decay_action_std(action_std_decay, action_std_min)
-    
 
-        if ep % 10 == 0:
-            print(ep, ": average reward of last 10 episodes: ", np.mean(reward_logs[-10:]))
-            print("action std: ", agent.action_std)
-
+        reward_logs.append(current_ep_reward)
+        print(f"t: {t}, {np.mean(current_ep_reward)}") 
+        print("action std: ", agent.action_std)
 
     print("Learning is done!")    
     while True:
         observation, info = env.reset() 
         for step in range(max_steps):
-            action = agent.select_action(torch.tensor(observation).to(agent.device))
-            observation, reward, terminated, truncated, info = env.step(action.item())
+            action = agent.select_action(observation)
+            observation, reward, terminated, truncated, info = env.step(action)
             if terminated or truncated:
                 break
 
