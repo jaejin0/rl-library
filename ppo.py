@@ -198,10 +198,9 @@ if __name__ == "__main__":
     action_std_decay_freq = int(2.5e5)
     save_model_freq = int(1e5)
     
-    directory = "PPO_pretrained"
+    directory = "pretrained_models"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    checkpoint_path = directory + f"/PPO_{env_name}.pth"
 
     # initialization
     env = gym.make(env_name, render_mode="human")
@@ -232,6 +231,7 @@ if __name__ == "__main__":
                 agent.decay_action_std(action_std_decay, action_std_min)
 
             if t % save_model_freq == 0:
+                checkpoint_path = directory + f"/PPO_{env_name}_timestep_{t}.pth"
                 agent.save(checkpoint_path)
 
             if terminated or truncated:
